@@ -24,13 +24,7 @@ typedef enum {
 
 } DIMENSION;
 
-volatile int counterHundredHz = 0;
-volatile int counterFiftyHz = 0;
-volatile int counterFiveHz = 0;
 
-volatile bool trigger_read_touchscreen = false;
-volatile bool trigger_pd_controller = false;
-volatile bool trigger_print_missed_deadlines = false;
 /*
  * Parameter
  */
@@ -59,8 +53,31 @@ volatile bool trigger_print_missed_deadlines = false;
 /*
  * Global Variables
  */
+
+volatile int counterHundredHz = 0;
+volatile int counterFiftyHz = 0;
+volatile int counterFiveHz = 0;
+
+volatile bool trigger_read_touchscreen = false;
+volatile bool trigger_pd_controller = false;
+volatile bool trigger_print_missed_deadlines = false;
+
+// PID Variables
+volatile double Px = 0.6;  // Proportional Control Constant
+volatile int Dx = 80;     // Derivative Control Constant
+volatile double Py = 0.65; // Proportional Control Constant
+volatile int Dy = 80;     // Derivative Control Constant
+
+
 uint16_t x_pos = 0;
 uint16_t y_pos = 0;
+uint16_t x_previous_pos = 0;
+uint16_t y_previous_pos = 0;
+uint16_t x_set_pos = 0;
+uint16_t y_set_pos = 0;
+int error = 0;
+int derivative = 0;
+int last_error = 0;
 bool trigger_exec = false;
 int deadlines_missed = 0;
 
@@ -102,10 +119,6 @@ void initialize_timer() {
     //    CLEARBIT(IEC0bits.T2IE); // Disable Timer2 interrupt enable control bit
     //    PR2 = 4000; // Set timer period 20ms: // 4000= 20*10^-3 * 12.8*10^6 * 1/64
     //    SETBIT(T2CONbits.TON); /* Turn Timer 2 on */
-
-
-
-
 
 }
 
@@ -270,14 +283,42 @@ void read_touchscreen() {
 
 }
 
+uint16_t setPointGenerator(){
+
+    x_set_pos = drawCircle();
+    y_set_pos = drawCircle();
+
+    // returns set point (X,Y) as they are located on circle
+}
+
+
 /*
  * PD Controller
  */
 void pd_controller(x_pos, y_pos) {
-    // filter x coordinate
+    // filter x coordinate and y coordinate
     x_pos = butterworth_filter_x(x_pos);
+    setPointGenerator;  // generate setpoint x and y
+    // calculate the error
+    error = x_set_pos - x_pos;
+    // calculate the derivative
+    derivative = error - last_error;
+    // claculate the control variable
+    pwn = (Px*error)+(Dx*derivative);
+    // Saturation or limit the pwn control variable to protect motor
+
+
+
+
+
+
+
+
+
     y_pos = butterworth_filter_y(y_pos);
     
+
+
 }
 
 /*
